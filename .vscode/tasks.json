@@ -1,0 +1,238 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Training and Test - ARIMA",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                "--date_list", "01/01/09 01:00", "12/27/09 23:00", "12/27/09 23:00", "12/31/10 00:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "ARIMA",
+                "--scaling",
+                "--forecast_type", "ol-multi",
+                "--output_len","24",
+               // "--unscale_predictions",
+
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Test - ARIMA",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",            
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                "--date_list", "01/01/09 01:00", "01/27/09 23:00", "01/27/09 23:00", "01/31/10 00:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "ARIMA",
+                "--data_freq", "H",
+                "--scaling",
+                "--forecast_type", "ol-multi",
+               // "--unscale_predictions",
+
+                ""
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Training and Test - SARIMA",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                "--date_list", "01/01/09 01:00", "12/29/09 01:00", "12/29/09 01:00", "12/31/09 01:00", "12/29/09 01:00", "12/31/10 01:00",
+                //"--date_list", "01/01/09 01:00", "01/05/09 01:00", "01/05/09 01:00", "01/07/09 01:00", "01/05/09 01:00", "01/07/09 01:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "LSTM",
+                "--input_len", "24",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+                "--validation",
+              //  "--unscale_predictions"
+                
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Test - SARIMA",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "test",
+                "--dataset_path", "./data/Dataset/opsd_germany_daily.csv",
+                "--date_format", "%Y-%m-%d",
+                "--date_list", "2012-01-01", "2015-12-31", "2016-01-01", "2017-12-31",
+                "--target_column", "Consumption",
+                "--model_path","./data/models/SARIMA_GERMANY_ONE",
+                "--model_type", "SARIMA",
+                "--period","7",
+                "--scaling", 
+                "--forecast_type", "ol-one", 
+
+                ""
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Training and Test - LSTM",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/Data_PV.csv",
+                "--date_format", "%d/%m/%Y %H:%M:%S",
+                "--date_list", "01/01/2019 00:15:00", "25/11/2019 00:15:00", "25/11/2019 00:15:00", "01/01/2020 00:00:00",
+                "--target_column", "Producer_1",
+                "--data_freq", "15T",
+                "--model_type", "LSTM",
+                "--input_len", "96",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+              //  "--validation",
+                "--unscale_predictions"
+               
+
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Training and Test - XGB",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                //"--date_list", "01/01/09 01:00", "12/29/09 01:00", "12/29/09 01:00", "12/31/09 01:00", "12/31/09 01:00", "12/31/10 01:00",
+                "--date_list", "01/01/09 01:00", "01/05/09 01:00", "01/05/09 01:00", "01/07/09 01:00", "01/05/09 01:00", "01/07/09 01:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "LSTM",
+                "--input_len", "24",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+                "--validation",
+              //  "--unscale_predictions"
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Training and Test - HYBRID",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                //"--date_list", "01/01/09 01:00", "12/29/09 01:00", "12/29/09 01:00", "12/31/09 01:00", "12/31/09 01:00", "12/31/10 01:00",
+                "--date_list", "01/01/09 01:00", "01/05/09 01:00", "01/05/09 01:00", "01/07/09 01:00", "01/05/09 01:00", "01/07/09 01:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "LSTM",
+                "--input_len", "24",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+                "--validation",
+              //  "--unscale_predictions"
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Training and Test - NAIVE",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/PV_marocco.csv",
+                "--date_format", "%d/%m/%Y %H:%M",
+                "--date_list", "18/06/2016 7:00", "14/06/2017 13:35", "14/06/2017 13:40", "29/10/2017 17:45",
+                "--target_column", "DC power of m-Si (W)",
+                "--model_type", "NAIVE",
+                "--scaling", 
+                "--forecast_type", "ol-one",
+                "--seasonal_model",
+                "--period", "12",
+                "--unscale_predictions",    
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Time series analysis",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "forecasting_framework.py",
+                "--run_mode", "train_test",
+                "--ts_analysis",
+                "--dataset_path", "./data/Dataset/AEP_hourly.csv",
+                "--date_format", "%Y-%m-%d %H:%M:%S",
+                "--date_list", "2017-01-01 00:00:00", "2017-01-06 00:00:00", "2017-01-06 00:00:00", "2017-01-08 00:00:00",
+                "--target_column", "AEP_MW",
+                "--data_freq", "H",
+                "--model_type", "TS ANALYSIS",
+                "--period","24",
+                //"--scaling", 
+             ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+
+    ]
+}

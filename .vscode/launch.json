@@ -1,0 +1,111 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Training and Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "forecasting_framework.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/Data_PV.csv",
+                "--date_format", "%d/%m/%Y %H:%M:%S",
+                "--date_list", "01/01/2019 00:15:00", "25/11/2019 00:15:00", "25/11/2019 00:15:00", "01/01/2020 00:00:00",
+                "--target_column", "Producer_1",
+                "--data_freq", "15T",
+                "--model_type", "LSTM",
+                "--input_len", "96",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+              //  "--validation",
+                "--unscale_predictions"
+            ]
+        },
+        {
+            "name": "Training and Test 2",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "forecasting_framework.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--run_mode", "train_test",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                "--date_list", "01/01/09 01:00", "12/31/09 01:00", "12/31/09 01:00", "12/31/10 01:00",
+                //"--date_list", "01/01/09 01:00", "01/31/09 01:00", "01/31/09 01:00", "02/07/09 01:00",
+                "--target_column", "load",
+                "--data_freq", "H",
+                "--model_type", "LSTM",
+                "--input_len", "24",
+                "--output_len", "1",
+                "--forecast_type","ol-one",
+                "--scaling", 
+                "--validation",
+              //  "--unscale_predictions"
+            ]
+        },
+        {
+            "name": "Training",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "forecasting_framework.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--run_mode", "train",
+                "--dataset_path", "./data/Dataset/Produzione_PV.csv",
+                "--date_format", "%d/%m/%Y %H:%M:%S",
+                "--date_list", "01/01/2019 00:15:00", "05/01/2019 00:15:00", "08/01/2019 00:15:00", "11/01/2019 00:15:00",
+                "--target_column", "Producer 3 (kW)",
+                "--model_type", "SARIMA",
+                "--period", "96",
+                "--set_fourier",
+                "--scaling", 
+                "--unscale_predictions",
+            ]
+        },
+        {
+            "name": "Test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "forecasting_framework.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--run_mode", "test",
+                "--dataset_path", "./data/Dataset/opsd_germany_daily.csv",
+                "--date_format", "%Y-%m-%d",
+                "--date_list", "2012-01-01", "2015-12-31", "2016-01-01", "2017-01-01",
+                "--target_column", "Consumption",
+                "--model_path","./data/models/SARIMA_2024-09-21_18-08-10",
+                "--model_type", "SARIMA",
+                "--period","7",
+                "--scaling", 
+                "--forecast_type", "ol-one", 
+            ]
+        },
+        {
+            "name": "Fine Tuning",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "forecasting_framework.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--run_mode", "fine_tuning",
+                "--dataset_path", "./data/Dataset/malaysia_data.csv",
+                "--date_format", "%m/%d/%y %H:%M",
+                "--date_list", "01/01/09 01:00", "12/31/09 23:00", "01/01/10 01:00", "01/01/11 00:00",
+                "--target_column", "load",
+                "--model_path", "./data/models/ARIMA_2024-05-30_11-27-39",
+                "--model_type", "SARIMA",
+                "--scaling", 
+                "--validation",
+            ]
+        }
+    ]
+}
