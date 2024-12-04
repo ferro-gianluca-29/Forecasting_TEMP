@@ -502,6 +502,7 @@ def main():
                         with open(f"{path}/scaler.pkl", "rb") as file:
                             scaler = pickle.load(file)
                         test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
+                        y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
                     
                     pd.Series(predictions.flatten()).to_csv('raw_data.csv', index = False)
 
@@ -529,6 +530,7 @@ def main():
                         with open(f"{path}/scaler.pkl", "rb") as file:
                             scaler = pickle.load(file)
                         test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
+                        
 
                     predictions = predictions[args.target_column]
 
