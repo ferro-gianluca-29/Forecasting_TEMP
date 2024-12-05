@@ -132,16 +132,15 @@ class LSTM_Predictor(Predictor):
             
             # CREATE MODEL  
 
-            def build_model(input_len, output_len, units=40, dropout_rate=0.2, learning_rate=0.001):
+            def build_model(input_len, output_len, units=128, dropout_rate=0.2, learning_rate=0.001):
                 
                 optimizer = Adam(learning_rate=learning_rate)
                 loss = 'mean_squared_error'
                 input_shape = (input_len, num_features)  
                 
                 model = Sequential()
-                model.add(LSTM(units, activation='tanh', return_sequences=True, input_shape=input_shape))
+                model.add(LSTM(units, activation='tanh', return_sequences=False, input_shape=input_shape))
                 model.add(Dropout(dropout_rate))
-                model.add(LSTM(units, activation='tanh', return_sequences=False)) 
                 model.add(Dense(output_len, activation='linear'))
                 model.add(Reshape((output_len, 1)))  
 
@@ -173,6 +172,8 @@ class LSTM_Predictor(Predictor):
                 history = model.fit(X_train, y_train, 
                                epochs=self.epochs,  
                                batch_size=self.batch_size)
+                
+                
 
             else:
                 history = model.fit(
@@ -183,6 +184,23 @@ class LSTM_Predictor(Predictor):
                                     callbacks=callbacks,  # Inclusione delle callback per il monitoraggio e il salvataggio
                                     verbose=1  # Per visualizzare il progresso durante il training
                                 )
+                
+                # Estrazione dei valori di loss di training e validazione dall'oggetto history
+                train_loss = history.history['loss']
+                val_loss = history.history['val_loss']
+                epochs = range(1, len(train_loss) + 1)
+
+                # Creazione del grafico
+                plt.figure(figsize=(10, 6))
+                plt.plot(epochs, train_loss, 'bo-', label='Training Loss')
+                plt.plot(epochs, val_loss, 'ro-', label='Validation Loss')
+                plt.title('Training and Validation Loss')
+                plt.xlabel('Epochs')
+                plt.ylabel('Loss')
+                plt.legend()
+                plt.grid(True)
+
+                plt.show()
 
             #save model as an attribute for later use from external methods
             self.model = model
