@@ -66,7 +66,7 @@ class LSTM_Predictor(Predictor):
         self.output_len = output_len
         self.validation = validation
         self.model = None
-        self.epochs = 1
+        self.epochs = 20
         self.batch_size = 1000
         self.learning_rate = 0.001
         
@@ -83,7 +83,13 @@ class LSTM_Predictor(Predictor):
         """
         try:
 
-            for df in (self.train, self.test):
+            index_split = int(len(self.train) * 0.8)
+
+            self.valid = self.train[index_split:]
+
+            self.train = self.train[:index_split]
+
+            for df in (self.train, self.valid, self.test):
                 # Existing time features
                 #df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
                 #df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
@@ -147,7 +153,12 @@ class LSTM_Predictor(Predictor):
 
             model.summary()
 
+            callbacks = [
+                        EarlyStopping(monitor='val_loss', patience=80, verbose=1, mode='min', restore_best_weights=True),
+                    ]
+
             X_train, y_train = self.data_windowing(self.train[features])
+            X_valid, y_valid = self.data_windowing(self.valid[features])
             
             
             if self.validation:
@@ -164,9 +175,14 @@ class LSTM_Predictor(Predictor):
                                batch_size=self.batch_size)
 
             else:
-                history = model.fit(X_train, y_train, 
-                               epochs=self.epochs,  
-                               batch_size=self.batch_size) 
+                history = model.fit(
+                                    X_train, y_train,
+                                    epochs=self.epochs,  # Numero di epoche per il training
+                                    batch_size=self.batch_size,  # Dimensione del batch, può essere regolata in base alle necessità
+                                    validation_data=(X_valid, y_valid),
+                                    callbacks=callbacks,  # Inclusione delle callback per il monitoraggio e il salvataggio
+                                    verbose=1  # Per visualizzare il progresso durante il training
+                                )
 
             #save model as an attribute for later use from external methods
             self.model = model
