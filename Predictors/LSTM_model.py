@@ -82,6 +82,47 @@ class LSTM_Predictor(Predictor):
         :return: A tuple containing the trained LSTM model and validation metrics
         """
         try:
+
+            for df in (self.train, self.test):
+                # Existing time features
+                #df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
+                #df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
+                #df['week_of_year_sin'] = np.sin(2 * np.pi * df.index.isocalendar().week / 52)
+                #df['week_of_year_cos'] = np.cos(2 * np.pi * df.index.isocalendar().week / 52)
+                df['week_day_sin'] = np.sin(2 * np.pi * df.index.weekday / 7)
+                df['week_day_cos'] = np.cos(2 * np.pi * df.index.weekday / 7)
+                df['hour_day_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
+                df['hour_day_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
+
+                # Aggiunta delle caratteristiche per il giorno del mese
+                df['day_sin'] = np.sin(2 * np.pi * df.index.day / df.index.days_in_month)
+                df['day_cos'] = np.cos(2 * np.pi * df.index.day / df.index.days_in_month)
+
+                # Rolling means
+                #df['roll_mean_1_day'] = df[self.target_column].rolling(window=self.period, min_periods=1).mean()
+                #df['roll_mean_7_day'] = df[self.target_column].rolling(window=self.period*7, min_periods=1).mean()
+
+            # Aggiornamento dell'elenco delle caratteristiche esogene
+            features = [
+                self.target_column,
+                #'month_sin', 
+                #'month_cos',
+                #'week_of_year_sin',
+                #'week_of_year_cos',
+                'week_day_sin',
+                'week_day_cos',
+                'hour_day_sin',
+                'hour_day_cos',
+                'day_sin',  # Aggiunta del seno del giorno
+                'day_cos',  # Aggiunta del coseno del giorno
+                #'roll_mean_1_day',
+                #'roll_mean_7_day',
+            
+            ]
+
+            self.features = features
+
+            num_features = len(features)
             
             # CREATE MODEL  
 
@@ -89,7 +130,7 @@ class LSTM_Predictor(Predictor):
                 
                 optimizer = Adam(learning_rate=learning_rate)
                 loss = 'mean_squared_error'
-                input_shape = (input_len, 1)  
+                input_shape = (input_len, num_features)  
                 
                 model = Sequential()
                 model.add(LSTM(units, activation='tanh', return_sequences=True, input_shape=input_shape))
@@ -106,7 +147,7 @@ class LSTM_Predictor(Predictor):
 
             model.summary()
 
-            X_train, y_train = self.data_windowing(self.train[self.target_column])
+            X_train, y_train = self.data_windowing(self.train[features])
             
             
             if self.validation:
@@ -138,7 +179,7 @@ class LSTM_Predictor(Predictor):
         
     def test_model(self,model):
         try:
-            X_test, y_test = self.data_windowing(self.test[self.target_column])
+            X_test, y_test = self.data_windowing(self.test[self.features])
             predictions = model.predict(X_test)
             predictions = predictions.flatten()
             
@@ -148,27 +189,25 @@ class LSTM_Predictor(Predictor):
             print(f"An error occurred during the model test: {e}")
             return None
 
-    def data_windowing(self, series):
-
+    def data_windowing(self, df):
         stride = 1 if self.output_len == 1 else self.output_len
         X, y = [], []
-        indices = []                    
+        indices = []
 
-        if len(series) < self.input_len + self.output_len:
+        if len(df) < self.input_len + self.output_len:
             print("Data is too short for creating windows")
             return None
         else:
-            
-            for i in range(0, len(series) - self.input_len - self.output_len + 1, stride):
-                X.append(series.iloc[i:i + self.input_len].values)
-                y.append(series.iloc[i + self.input_len:i + self.input_len + self.output_len].values)
+            for i in range(0, len(df) - self.input_len - self.output_len + 1, stride):
+                X.append(df.iloc[i:i + self.input_len].values)
+                y.append(df[self.target_column].iloc[i + self.input_len:i + self.input_len + self.output_len].values)
                 indices.append(i)
 
-        # Conversione in array e ridimensionamento
+        # Conversione in array
         X, y = np.array(X), np.array(y)
 
-        # Reshape dei dati di input per includere tutte le feature nel modello
-        X = np.reshape(X, (X.shape[0], self.input_len, 1))
+        # Reshape di X per includere tutte le feature
+        X = np.reshape(X, (X.shape[0], self.input_len, -1))  # -1 qui farà in modo che numpy calcoli automaticamente il numero corretto di features
 
         return X, y
         

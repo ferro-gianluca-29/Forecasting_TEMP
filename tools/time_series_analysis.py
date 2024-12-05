@@ -183,7 +183,9 @@ def time_s_analysis(df, target_column, seasonal_period, d = 0, D = 0):
     :param D: Order of seasonal differencing.
     """
 
-    """# Plot the time series
+    # Plot the time series
+    df = df.applymap(lambda x: x.replace(',', '.') if isinstance(x, str) else x)
+    df[target_column] = df[target_column].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
     plt.plot(df['date'], df[target_column], 'b')
     plt.title('Time Series')
     plt.xlabel('Time series index')
@@ -231,7 +233,7 @@ def time_s_analysis(df, target_column, seasonal_period, d = 0, D = 0):
     axes[1, 1].set_ylabel('Partial Autocorrelation')
 
     plt.tight_layout()
-    plt.show()"""
+    plt.show()
 
     # Time series decomposition into its trend, seasonality, and residuals components
     decomposition = STL(df[target_column][:seasonal_period*30], period=seasonal_period).fit()
