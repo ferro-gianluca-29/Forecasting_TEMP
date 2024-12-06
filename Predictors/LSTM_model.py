@@ -29,6 +29,9 @@ from tensorflow.keras.models import clone_model
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 
+from keras_tuner import BayesianOptimization
+ 
+
 
 
 from tqdm import tqdm
@@ -69,9 +72,12 @@ class LSTM_Predictor(Predictor):
         self.output_len = output_len
         self.validation = validation
         self.model = None
-        self.epochs = 20
+        self.epochs = 1
         self.batch_size = 1000
         self.learning_rate = 0.001
+
+        self.optimization_epochs = 1
+        
         
 
     def train_model(self):
@@ -135,37 +141,68 @@ class LSTM_Predictor(Predictor):
             
             # CREATE MODEL  
 
-            def build_model(input_len, output_len, units=128, dropout_rate=0.2, learning_rate=0.001):
-                
-                optimizer = Adam(learning_rate=learning_rate)
-                loss = 'mean_squared_error'
-                input_shape = (input_len, num_features)  
-                
+            def build_model(input_len, output_len, num_features, num_layers=1, units=128, dropout_rate=0.2, learning_rate=0.001):
                 model = Sequential()
-                model.add(LSTM(units, activation='tanh', return_sequences=False, input_shape=input_shape))
-                model.add(Dropout(dropout_rate))
+                for i in range(num_layers):
+                    # Aggiungere return_sequences=True per tutti tranne l'ultimo layer LSTM
+                    return_sequences = i < num_layers - 1
+                    if i == 0:
+                        # Primo layer con shape specifico
+                        model.add(LSTM(units, activation='tanh', return_sequences=return_sequences, input_shape=(input_len, num_features)))
+                    else:
+                        # Layer successivi non hanno bisogno della definizione input_shape
+                        model.add(LSTM(units, activation='tanh', return_sequences=return_sequences))
+                    if dropout_rate > 0:
+                        model.add(Dropout(dropout_rate))
+                
                 model.add(Dense(output_len, activation='linear'))
-                model.add(Reshape((output_len, 1)))  
+                model.add(Reshape((output_len, 1)))
 
-                model.compile(optimizer=optimizer, loss=loss, 
-                              metrics=[RootMeanSquaredError()])
+                optimizer = Adam(learning_rate=learning_rate)
+                model.compile(optimizer=optimizer, loss='mean_squared_error', metrics=[RootMeanSquaredError()])
                 return model
 
-            model = build_model(self.input_len, self.output_len, learning_rate = self.learning_rate)
+            model = build_model(self.input_len, self.output_len, num_features, learning_rate = self.learning_rate)
+
 
             model.summary()
+
+            X_train, y_train = self.data_windowing(self.train[features])
+            X_valid, y_valid = self.data_windowing(self.valid[features])
+
+
+            def model_builder(hp):
+                num_layers = hp.Int('num_layers', min_value=1, max_value=3, step=1)
+                units = hp.Int('units', min_value=32, max_value=512, step=32)
+                dropout_rate = hp.Float('dropout_rate', min_value=0.0, max_value=0.5, step=0.1)
+                learning_rate = hp.Float('learning_rate', min_value=1e-5, max_value=1e-2, sampling='log')
+                # Assicurati di passare num_features come definito o calcolato in precedenza
+                return build_model(self.input_len, self.output_len, num_features, num_layers, units, dropout_rate, learning_rate)
+
+            bayesian_opt_tuner = BayesianOptimization(
+                model_builder,
+                objective='val_loss',
+                max_trials=7,
+                executions_per_trial=2,
+                overwrite=True,
+                directory='my_dir',
+                project_name='bayesian_optimization'
+            )
+
+            bayesian_opt_tuner.search(X_train, y_train,
+                                    epochs=self.optimization_epochs,
+                                    validation_data=(X_valid, y_valid),
+                                    batch_size=self.batch_size,
+                                    verbose=1)
+
+            best_model = bayesian_opt_tuner.get_best_models(num_models=1)[0]
 
             lr_scheduler = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=40, min_lr=0.0001, verbose=1)
 
             callbacks = [
                         lr_scheduler,
-                        EarlyStopping(monitor='val_loss', patience=80, verbose=1, mode='min', restore_best_weights=True),
                     ]
 
-            X_train, y_train = self.data_windowing(self.train[features])
-            X_valid, y_valid = self.data_windowing(self.valid[features])
-            
-            
             if self.validation:
                 # Select validation method by uncommenting the desired line
                 validated_model_weights = self.repeated_holdout_validation(model, nreps=10)
@@ -180,9 +217,8 @@ class LSTM_Predictor(Predictor):
                                batch_size=self.batch_size)
                 
                 
-
             else:
-                history = model.fit(
+                history = best_model.fit(
                                     X_train, y_train,
                                     epochs=self.epochs,  # Numero di epoche per il training
                                     batch_size=self.batch_size,  # Dimensione del batch, può essere regolata in base alle necessità
@@ -205,6 +241,9 @@ class LSTM_Predictor(Predictor):
                 plt.ylabel('Loss')
                 plt.legend()
                 plt.grid(True)
+
+                save_path = 'train_val_loss.png'
+                plt.savefig(save_path)
 
                 plt.show()
 

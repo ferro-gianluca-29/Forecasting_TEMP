@@ -503,6 +503,14 @@ def main():
                             scaler = pickle.load(file)
                         test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
                         y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
+
+                        rmse = np.zeros(len(predictions))  # Inizializza un array per gli errori
+                        for i in range(len(predictions)):
+                            rmse[i] = np.sqrt((predictions[i] - y_test[i]) ** 2)
+
+                        mean_rmse = np.mean(rmse)
+
+                        print(f"mean RMSE: {mean_rmse}")
                     
                     pd.Series(predictions.flatten()).to_csv('raw_data.csv', index = False)
 
