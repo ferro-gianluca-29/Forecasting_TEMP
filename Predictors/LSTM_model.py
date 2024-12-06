@@ -27,6 +27,9 @@ from keras.losses import MeanSquaredError
 from keras.callbacks import EarlyStopping
 from tensorflow.keras.models import clone_model
 
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+
+
 
 from tqdm import tqdm
 
@@ -152,7 +155,10 @@ class LSTM_Predictor(Predictor):
 
             model.summary()
 
+            lr_scheduler = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=40, min_lr=0.0001, verbose=1)
+
             callbacks = [
+                        lr_scheduler,
                         EarlyStopping(monitor='val_loss', patience=80, verbose=1, mode='min', restore_best_weights=True),
                     ]
 
