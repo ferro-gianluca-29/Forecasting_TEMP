@@ -92,12 +92,6 @@ class LSTM_Predictor(Predictor):
         """
         try:
 
-            index_split = int(len(self.train) * 0.8)
-
-            self.valid = self.train[index_split:]
-
-            self.train = self.train[:index_split]
-
             for df in (self.train, self.valid, self.test):
                 # Existing time features
                 #df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
