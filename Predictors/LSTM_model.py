@@ -32,8 +32,6 @@ from tensorflow.keras.callbacks import ReduceLROnPlateau
 from keras_tuner import BayesianOptimization
  
 
-
-
 from tqdm import tqdm
 
 from skforecast.deep_learning import ForecasterRnn
@@ -68,13 +66,13 @@ class LSTM_Predictor(Predictor):
         self.run_mode = run_mode
         self.verbose = verbose
         self.target_column = target_column
-        self.input_len = input_len
+        self.input_len = input_len  
         self.output_len = output_len
         self.validation = validation
         self.model = None
-        self.epochs = 1
-        self.batch_size = 1000
-        self.learning_rate = 0.001
+        self.epochs = 300
+        self.batch_size = 32
+        self.learning_rate = 0.0001
 
         self.optimization_epochs = 1
         
@@ -92,60 +90,17 @@ class LSTM_Predictor(Predictor):
         """
         try:
 
-            for df in (self.train, self.test):
-                # Existing time features
-                #df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
-                #df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
-                #df['week_of_year_sin'] = np.sin(2 * np.pi * df.index.isocalendar().week / 52)
-                #df['week_of_year_cos'] = np.cos(2 * np.pi * df.index.isocalendar().week / 52)
-                df['week_day_sin'] = np.sin(2 * np.pi * df.index.weekday / 7)
-                df['week_day_cos'] = np.cos(2 * np.pi * df.index.weekday / 7)
-                df['hour_day_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
-                df['hour_day_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
-
-                # Aggiunta delle caratteristiche per il giorno del mese
-                df['day_sin'] = np.sin(2 * np.pi * df.index.day / df.index.days_in_month)
-                df['day_cos'] = np.cos(2 * np.pi * df.index.day / df.index.days_in_month)
-
-                # Rolling means
-                #df['roll_mean_1_day'] = df[self.target_column].rolling(window=self.period, min_periods=1).mean()
-                #df['roll_mean_7_day'] = df[self.target_column].rolling(window=self.period*7, min_periods=1).mean()
-
-            # Aggiornamento dell'elenco delle caratteristiche esogene
-            features = [
-                self.target_column,
-                #'month_sin', 
-                #'month_cos',
-                #'week_of_year_sin',
-                #'week_of_year_cos',
-                'week_day_sin',
-                'week_day_cos',
-                'hour_day_sin',
-                'hour_day_cos',
-                'day_sin',  # Aggiunta del seno del giorno
-                'day_cos',  # Aggiunta del coseno del giorno
-                #'roll_mean_1_day',
-                #'roll_mean_7_day',
-            
-            ]
-
-            self.features = features
-
-            num_features = len(features)
+            num_features = 1
             
             # CREATE MODEL  
 
-            def build_model(input_len, output_len, units=40, dropout_rate=0.4, learning_rate=0.001):
+            def build_model(input_len, output_len, units=128, dropout_rate=0.1, learning_rate=0.001):
                 
                 optimizer = Adam(learning_rate=learning_rate)
                 loss = 'mean_squared_error'
                 input_shape = (input_len, num_features)  
                 
                 model = Sequential()
-                model.add(LSTM(units, activation='tanh', return_sequences=True, input_shape=input_shape))
-                model.add(Dropout(dropout_rate))
-                model.add(LSTM(units, activation='tanh', return_sequences=True, input_shape=input_shape))
-                model.add(Dropout(dropout_rate))
                 model.add(LSTM(units, activation='tanh', return_sequences=False, input_shape=input_shape))
                 model.add(Dropout(dropout_rate))
                 model.add(Dense(output_len, activation='linear'))
@@ -160,13 +115,14 @@ class LSTM_Predictor(Predictor):
 
             model.summary()
 
-            X_train, y_train = self.data_windowing(self.train[features])
+            X_train, y_train = self.data_windowing(self.train[self.target_column])
       
-            lr_scheduler = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=40, min_lr=0.0001, verbose=1)
+            lr_scheduler = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=10, min_lr=0.00001, verbose=1)
+
 
             callbacks = [
                         lr_scheduler,
-                    ]
+                    ] 
 
             if self.validation:
                 # Select validation method by uncommenting the desired line
@@ -203,7 +159,7 @@ class LSTM_Predictor(Predictor):
         
     def test_model(self,model):
         try:
-            X_test, y_test = self.data_windowing(self.test[self.features])
+            X_test, y_test = self.data_windowing(self.test[self.target_column])
             predictions = model.predict(X_test)
             predictions = predictions.flatten()
             
@@ -213,25 +169,27 @@ class LSTM_Predictor(Predictor):
             print(f"An error occurred during the model test: {e}")
             return None
 
-    def data_windowing(self, df):
+    def data_windowing(self, series):
+
         stride = 1 if self.output_len == 1 else self.output_len
         X, y = [], []
-        indices = []
+        indices = []                    
 
-        if len(df) < self.input_len + self.output_len:
+        if len(series) < self.input_len + self.output_len:
             print("Data is too short for creating windows")
             return None
         else:
-            for i in range(0, len(df) - self.input_len - self.output_len + 1, stride):
-                X.append(df.iloc[i:i + self.input_len].values)
-                y.append(df[self.target_column].iloc[i + self.input_len:i + self.input_len + self.output_len].values)
+            
+            for i in range(0, len(series) - self.input_len - self.output_len + 1, stride):
+                X.append(series.iloc[i:i + self.input_len].values)
+                y.append(series.iloc[i + self.input_len:i + self.input_len + self.output_len].values)
                 indices.append(i)
 
-        # Conversione in array
+        # Conversione in array e ridimensionamento
         X, y = np.array(X), np.array(y)
 
-        # Reshape di X per includere tutte le feature
-        X = np.reshape(X, (X.shape[0], self.input_len, -1))  # -1 qui farà in modo che numpy calcoli automaticamente il numero corretto di features
+        # Reshape dei dati di input per includere tutte le feature nel modello
+        X = np.reshape(X, (X.shape[0], self.input_len, 1))
 
         return X, y
         
