@@ -542,11 +542,11 @@ def main():
 
                     predictions = predictions[args.target_column]
 
-                    rmse = np.zeros(len(predictions)) 
+                    temp_rmse = np.zeros(len(predictions)) 
                     for i in range(len(predictions)):
-                        rmse[i] = np.sqrt((predictions[i] - test[args.target_column].iloc[i]) ** 2)
+                        temp_rmse[i] = np.sqrt((predictions[i] - test[args.target_column].iloc[i]) ** 2)
 
-                    mean_rmse = np.mean(rmse)
+                    mean_rmse = np.mean(temp_rmse)
 
                     print(f"Mean RMSE: {mean_rmse}")
 

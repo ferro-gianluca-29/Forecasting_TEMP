@@ -142,7 +142,7 @@
                 "--dataset_path", "./data/Dataset/Consumer_power.csv",
                 "--date_format", "%d/%m/%Y %H:%M:%S",
                 "--date_list", "01/01/2019 00:15:00", "25/11/2019 00:15:00", "25/11/2019 00:15:00", "01/01/2020 00:00:00",
-                "--target_column", "Cons 2",
+                "--target_column", "Cons 4",
                 "--data_freq", "15T",
                 "--model_type", "XGB",
                 "--input_len", "96",

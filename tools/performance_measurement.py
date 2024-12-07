@@ -55,6 +55,12 @@ class PerfMeasure:
                     if np.any(pred_zero_indices):
                         predictions[pred_zero_indices] = 0.00000001
 
+                    temp_rmse = np.zeros(len(predictions)) 
+                    for i in range(len(predictions)):
+                        temp_rmse[i] = np.sqrt((predictions[i] - test.iloc[i]) ** 2)
+
+                    mean_rmse = np.mean(temp_rmse)
+
             performance_metrics = {}
             mse = mean_squared_error(test, predictions)
             rmse = np.sqrt(mse)

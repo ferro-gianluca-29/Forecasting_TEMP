@@ -138,7 +138,7 @@ class XGB_Predictor(Predictor):
 
         forecaster = ForecasterRecursive(
                 regressor       = reg,
-                lags            = 10
+                lags            = 96
              )
 
         forecaster.fit(y = self.train[self.target_column],
