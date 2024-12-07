@@ -92,7 +92,7 @@ class LSTM_Predictor(Predictor):
         """
         try:
 
-            for df in (self.train, self.valid, self.test):
+            for df in (self.train, self.test):
                 # Existing time features
                 #df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
                 #df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
