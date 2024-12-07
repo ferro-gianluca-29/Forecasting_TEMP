@@ -83,18 +83,18 @@ class XGB_Predictor(Predictor):
 
         # Aggiornamento dell'elenco delle caratteristiche esogene
         exog_features = [
-            'month_sin', 
-            'month_cos',
-            'week_of_year_sin',
-            'week_of_year_cos',
+            #'month_sin', 
+            #'month_cos',
+            #'week_of_year_sin',
+            #'week_of_year_cos',
             'week_day_sin',
             'week_day_cos',
             'hour_day_sin',
             'hour_day_cos',
             'day_sin',  # Aggiunta del seno del giorno
             'day_cos',  # Aggiunta del coseno del giorno
-            'roll_mean_1_day',
-            'roll_mean_7_day',
+            #'roll_mean_1_day',
+           #'roll_mean_7_day',
         ]
         
         self.selected_exog = exog_features
@@ -138,11 +138,11 @@ class XGB_Predictor(Predictor):
 
         forecaster = ForecasterRecursive(
                 regressor       = reg,
-                lags            = self.input_len
+                lags            = 10
              )
 
         forecaster.fit(y = self.train[self.target_column],
-                       #exog = self.train[exog_features] 
+                       exog = self.train[exog_features] 
                        )
         
         #save model as an attribute for later use from external methods
@@ -166,8 +166,8 @@ class XGB_Predictor(Predictor):
         mse, predictions = backtesting_forecaster(
                         forecaster         = forecaster,
                         y = pd.concat([forecaster.last_window_[self.target_column], self.test[self.target_column]]),
-                        #exog               = pd.concat([self.train[self.selected_exog].iloc[-len(forecaster.last_window_):], 
-                                                                                        #self.test[self.selected_exog]]),
+                        exog               = pd.concat([self.train[self.selected_exog].iloc[-len(forecaster.last_window_):], 
+                                                                                        self.test[self.selected_exog]]),
                         cv                 = cv,
                         metric             = 'mean_squared_error',
                         n_jobs             = 'auto',
@@ -175,7 +175,7 @@ class XGB_Predictor(Predictor):
                         show_progress      = True
                     )
         
-        print(f"BACKTESTING RMSE: {np.sqrt(mse['mean_squared_error'])}")
+        #print(f"BACKTESTING RMSE: {np.sqrt(mse['mean_squared_error'])}")
 
         predictions.rename(columns={'pred': self.target_column}, inplace=True)
 

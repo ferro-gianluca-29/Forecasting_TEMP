@@ -182,8 +182,8 @@ class LSTM_Predictor(Predictor):
             bayesian_opt_tuner = BayesianOptimization(
                 model_builder,
                 objective='val_loss',
-                max_trials=7,
-                executions_per_trial=2,
+                max_trials=1,
+                executions_per_trial=1,
                 overwrite=True,
                 directory='my_dir',
                 project_name='bayesian_optimization'

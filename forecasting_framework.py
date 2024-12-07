@@ -504,11 +504,11 @@ def main():
                         test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
                         y_test = scaler.inverse_transform(y_test.reshape(-1, 1))
 
-                        rmse = np.zeros(len(predictions))  # Inizializza un array per gli errori
+                        temp_rmse = np.zeros(len(predictions))  # Inizializza un array per gli errori
                         for i in range(len(predictions)):
-                            rmse[i] = np.sqrt((predictions[i] - y_test[i]) ** 2)
+                            temp_rmse[i] = np.sqrt((predictions[i] - y_test[i]) ** 2)
 
-                        mean_rmse = np.mean(rmse)
+                        mean_rmse = np.mean(temp_rmse)
 
                         print(f"mean RMSE: {mean_rmse}")
                     
@@ -541,6 +541,14 @@ def main():
                         
 
                     predictions = predictions[args.target_column]
+
+                    rmse = np.zeros(len(predictions)) 
+                    for i in range(len(predictions)):
+                        rmse[i] = np.sqrt((predictions[i] - test[args.target_column].iloc[i]) ** 2)
+
+                    mean_rmse = np.mean(rmse)
+
+                    print(f"Mean RMSE: {mean_rmse}")
 
                     pd.Series(predictions).to_csv('raw_data.csv', index = False)
 
