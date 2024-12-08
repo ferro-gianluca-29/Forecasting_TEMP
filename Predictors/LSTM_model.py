@@ -363,7 +363,11 @@ class LSTM_Predictor(Predictor):
         plt.ylabel('Scaled value', fontsize=14)
         plt.legend(loc='best')
         plt.tight_layout()
+        # Predefined save path
+        save_path = 'lstm_predictions.png'
+        plt.savefig(save_path)
         plt.show()
+
 
     def save_model(self, path):
         save_forecaster(self.model, f"{path}/LSTM.joblib", verbose=False)
