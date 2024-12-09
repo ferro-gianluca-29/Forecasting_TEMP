@@ -29,7 +29,7 @@ from tensorflow.keras.models import clone_model
 
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 
-from keras_tuner import BayesianOptimization
+#from keras_tuner import BayesianOptimization
  
 
 from tqdm import tqdm
@@ -70,7 +70,7 @@ class LSTM_Predictor(Predictor):
         self.output_len = output_len
         self.validation = validation
         self.model = None
-        self.epochs = 300
+        self.epochs = 1
         self.batch_size = 32
         self.learning_rate = 0.0001
 

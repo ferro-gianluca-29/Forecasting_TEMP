@@ -35,6 +35,12 @@ class PerfMeasure:
 
                     pred_zero_indices = np.where(predictions == 0)
                     predictions.iloc[pred_zero_indices] = 0.00000001
+
+                    temp_rmse = np.zeros(len(predictions)) 
+                    for i in range(len(predictions)):
+                        temp_rmse[i] = np.sqrt((predictions[i] - test.iloc[i]) ** 2)
+
+                    mean_rmse = np.mean(temp_rmse)
                     
                 case 'LSTM':
                     print("")

@@ -101,14 +101,14 @@ class XGB_Predictor(Predictor):
                                 
         reg = XGBRegressor(
             n_estimators=1000,  # Number of boosting rounds (you can tune this)
-            learning_rate=0.05,   # Learning rate (you can tune this)
+            learning_rate=0.01,   # Learning rate (you can tune this)
             max_depth=5,          # Maximum depth of the trees (you can tune this)
             min_child_weight=1,   # Minimum sum of instance weight needed in a child
             gamma=0,              # Minimum loss reduction required to make a further partition
-            subsample=0.8,        # Fraction of samples used for training
-            colsample_bytree=0.8, # Fraction of features used for training
-            reg_alpha=0,          # L1 regularization term on weights
-            reg_lambda=1,         # L2 regularization term on weights
+            subsample=0.6,        # Fraction of samples used for training
+            colsample_bytree=0.6, # Fraction of features used for training
+            reg_alpha=1,          # L1 regularization term on weights
+            reg_lambda=2,         # L2 regularization term on weights
             objective='reg:squarederror',  # Objective function for regression
             random_state=42,      # Seed for reproducibility
             eval_metric=['rmse', 'mae'],
@@ -118,6 +118,9 @@ class XGB_Predictor(Predictor):
             #tree_method  = 'hist',
             #device       = 'cuda',
                             )
+
+
+        
 
         
         def custom_weights(index):
@@ -171,7 +174,7 @@ class XGB_Predictor(Predictor):
                         cv                 = cv,
                         metric             = 'mean_squared_error',
                         n_jobs             = 'auto',
-                        verbose            = True, # Change to False to see less information
+                        verbose            = False, # Change to False to see less information
                         show_progress      = True
                     )
         

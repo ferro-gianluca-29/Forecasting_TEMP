@@ -511,6 +511,9 @@ def main():
                         mean_rmse = np.mean(temp_rmse)
 
                         print(f"mean RMSE: {mean_rmse}")
+
+                    pd.Series((np.floor(y_test.flatten() * 1000) / 1000)).to_csv('y_test.csv', index=False)
+
                     
                     pd.Series(predictions.flatten()).to_csv('raw_data.csv', index = False)
 
