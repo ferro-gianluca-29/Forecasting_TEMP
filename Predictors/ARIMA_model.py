@@ -2,15 +2,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import sys, os
-import pmdarima
-from pmdarima import ARIMA
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.deterministic import Fourier
+
 from tools.time_series_analysis import ljung_box_test
 
+# pmdarima
 import pmdarima
 from pmdarima import ARIMA
 from pmdarima import auto_arima
+
+# statsmodels
+import statsmodels
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import kpss
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.seasonal import seasonal_decompose
 
 
 from skforecast.utils import save_forecaster
@@ -19,6 +25,16 @@ from tqdm import tqdm
 import pickle
 from Predictors.Predictor import Predictor
 
+
+# skforecast
+import skforecast
+from skforecast.datasets import fetch_dataset
+from skforecast.plot import set_dark_theme
+from skforecast.sarimax import Sarimax
+from skforecast.recursive import ForecasterSarimax
+from skforecast.model_selection import TimeSeriesFold
+from skforecast.model_selection import backtesting_sarimax
+from skforecast.model_selection import grid_search_sarimax
 
 
 class ARIMA_Predictor(Predictor):
@@ -55,7 +71,7 @@ class ARIMA_Predictor(Predictor):
             d = 0
 
             # Selection of the model with best AIC score
-            model = auto_arima(
+            """model = auto_arima(
                         y=self.train[self.target_column],
                         start_p=0,
                         start_q=0,
@@ -68,18 +84,16 @@ class ARIMA_Predictor(Predictor):
                         error_action='warn',  # Show warnings for troubleshooting
                         suppress_warnings=False,
                         stepwise=True
-                        )
+                        )"""
             
             # for debug
-            #model = ARIMA(order=(4, 1, 4))
-
+            order = (4, 1, 4)
             
 
-            print(f"Best order found: {model.order}")
-            self.ARIMA_order = model.order
+            print(f"Best order found: {order}")
+            self.ARIMA_order = order
 
-            forecaster = ForecasterSarimax(
-                 regressor=model)
+            forecaster = ForecasterSarimax( regressor=Sarimax(order=self.ARIMA_order) )
              
             # Training the model with the best parameters found
             print("\nTraining the ARIMA model...")
@@ -88,9 +102,9 @@ class ARIMA_Predictor(Predictor):
             # Save the model for later use
             self.ARIMA_model = forecaster
 
-            # Running the LJUNG-BOX test for residual correlation
+            """# Running the LJUNG-BOX test for residual correlation
             residuals = model.resid()
-            ljung_box_test(residuals)
+            ljung_box_test(residuals)"""
             print("Model successfully trained.")
             valid_metrics = None
             last_index = self.train.index[-1]
@@ -126,17 +140,24 @@ class ARIMA_Predictor(Predictor):
             elif self.forecast_type == 'ol-multi':
                 steps = output_len
 
-            _, predictions = backtesting_sarimax(
-                    forecaster            = forecaster,
-                    y                     = full_data[self.target_column],
-                    initial_train_size    = len(self.train),
-                    steps                 = steps,
-                    metric                = 'mean_absolute_error',
-                    refit                 = ol_refit,
-                    n_jobs                = "auto",
-                    verbose               = True,
-                    show_progress         = True
+            cv = TimeSeriesFold(
+                        steps              = steps,
+                        initial_train_size = len(self.train),
+                        refit              = False,
+                        fixed_train_size   = True,
                 )
+                
+            _, predictions = backtesting_sarimax(
+                        forecaster            = forecaster,
+                        y                     = full_data[self.target_column],
+                        cv                    = cv,
+                        metric                = 'mean_absolute_error',
+                        n_jobs                = "auto",
+                        suppress_warnings_fit = True,
+                        verbose               = True,
+                        show_progress         = True
+                     )
+
 
             predictions.rename(columns={'pred': self.target_column}, inplace=True)     
             print("Model testing successful.")        

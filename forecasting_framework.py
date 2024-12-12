@@ -234,7 +234,7 @@ def main():
                         if exit:
                             raise ValueError("Unable to preprocess dataset.")
                         
-                    arima.prepare_data(train, valid, test)
+                    arima.prepare_data(train, test)
 
                 case 'SARIMA'|'SARIMAX':
                     # Set the exogenous variable column

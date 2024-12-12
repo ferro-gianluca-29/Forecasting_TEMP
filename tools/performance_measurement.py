@@ -31,7 +31,7 @@ class PerfMeasure:
                     
                     # Handle zero values in test_data for MAPE and MSPE calculations
                     test_zero_indices = np.where(test == 0)
-                    test.iloc[test_zero_indices] = 0.00000001
+                    #test.iloc[test_zero_indices] = 0.00000001
 
                     pred_zero_indices = np.where(predictions == 0)
                     predictions.iloc[pred_zero_indices] = 0.00000001
