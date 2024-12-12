@@ -278,7 +278,7 @@ def main():
                         exog_test = test[exog]
                     else: target_test = None
 
-                    sarima.prepare_data(train, valid, test)
+                    sarima.prepare_data(train, test)
 
                 case 'LSTM':
                     train, test, exit = data_preprocessor.preprocess_data()

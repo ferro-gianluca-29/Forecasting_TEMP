@@ -7,15 +7,28 @@ from statsmodels.tsa.deterministic import Fourier
 from tools.time_series_analysis import  ljung_box_test
 
 
-from skforecast.utils import save_forecaster
 
+# pmdarima
 import pmdarima
+from pmdarima import ARIMA
 from pmdarima import auto_arima
+
+# skforecast
+import skforecast
+from skforecast.datasets import fetch_dataset
+from skforecast.plot import set_dark_theme
+from skforecast.sarimax import Sarimax
+from skforecast.recursive import ForecasterSarimax
+from skforecast.model_selection import TimeSeriesFold
+from skforecast.model_selection import backtesting_sarimax
+from skforecast.model_selection import grid_search_sarimax
 
 
 from tqdm import tqdm
 import pickle
 from Predictors.Predictor import Predictor
+
+
 
 class SARIMA_Predictor(Predictor):
     """
@@ -57,7 +70,7 @@ class SARIMA_Predictor(Predictor):
             D = 0
 
             # Selection of the model with best AIC score
-            """model = auto_arima(
+            model = auto_arima(
                         y=self.train[self.target_column],
                         start_p=0,
                         start_q=0,
@@ -75,7 +88,7 @@ class SARIMA_Predictor(Predictor):
                         )
             
             order = model.order
-            seasonal_order = model.seasonal_order"""
+            seasonal_order = model.seasonal_order
 
             # Create Fourier terms for weekly seasonality
             def create_fourier_terms(t, period, num_terms):
@@ -86,19 +99,21 @@ class SARIMA_Predictor(Predictor):
                 return np.column_stack(terms)
 
             num_fourier_terms = 4
-            seasonality = 96  # Daily seasonality
+            seasonality = 24  # Daily seasonality
             target_train = self.train[self.target_column]
             fourier_terms = create_fourier_terms(target_train, seasonality, num_fourier_terms)
 
-            model = auto_arima(target_train, exogenous=fourier_terms[:n], seasonal=True, suppress_warnings=True)
+            """model = auto_arima(target_train, 
+                               #exogenous=fourier_terms[:n], 
+                               seasonal=True, suppress_warnings=True)"""
 
 
             period = self.period  
             target_train = self.train[self.target_column]
 
             # Select directly the order (Comment if using the AIC search)
-            order = (2,1,1)
-            seasonal_order = (2,0,1, 24)
+            """order = (2,1,1)
+            seasonal_order = (2,0,1, 24)"""
             
             best_order = (order, seasonal_order)
             print(f"Best order found: {best_order}")
@@ -107,14 +122,8 @@ class SARIMA_Predictor(Predictor):
             self.SARIMA_order = best_order
             print("\nTraining the SARIMAX model...")
 
-            model = Sarimax( order = order,
-                                        seasonal_order=seasonal_order,
-                                        #maxiter = 500
-                                        )
+            forecaster = ForecasterSarimax( regressor=Sarimax(order=(2,1,1), seasonal_order=(2,0,1, 96)) )
 
-            forecaster = ForecasterSarimax(
-                 regressor=model,
-             )
             forecaster.fit(y=target_train)    
 
             residuals = forecaster.regressor.sarimax_res.resid    
@@ -163,18 +172,24 @@ class SARIMA_Predictor(Predictor):
 
             predictions = []
                            
-            _, predictions = backtesting_sarimax(
-                    forecaster            = forecaster,
-                    y                     = full_data[self.target_column],
-                    initial_train_size    = len(self.train),
-                    steps                 = steps,
-                    metric                = 'mean_absolute_error',
-                    refit                 = False,
-                    n_jobs                = "auto",
-                    verbose               = True,
-                    show_progress         = True
+            cv = TimeSeriesFold(
+                        steps              = steps,
+                        initial_train_size = len(self.train),
+                        refit              = False,
+                        fixed_train_size   = True,
                 )
-
+                
+            _, predictions = backtesting_sarimax(
+                        forecaster            = forecaster,
+                        y                     = full_data[self.target_column],
+                        cv                    = cv,
+                        metric                = 'mean_absolute_error',
+                        n_jobs                = "auto",
+                        suppress_warnings_fit = True,
+                        verbose               = True,
+                        show_progress         = True
+                     )
+            
             predictions.rename(columns={'pred': self.target_column}, inplace=True)
             print("Model testing successful.")
             return predictions
@@ -202,7 +217,7 @@ class SARIMA_Predictor(Predictor):
 
     def save_model(self, path):
         # Save model
-        save_forecaster(self.model, f"{path}/SARIMA.joblib", verbose=False)
+        #save_forecaster(self.model, f"{path}/SARIMA.joblib", verbose=False)
         # Save training info
         with open(f"{path}/model_details_SARIMA.txt", "w") as file:
             file.write(f"Training Info:\n")

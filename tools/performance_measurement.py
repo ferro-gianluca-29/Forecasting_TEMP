@@ -27,7 +27,7 @@ class PerfMeasure:
         try:
             match self.model_type:
                 
-                case 'ARIMA'|'SARIMA'|'SARIMAX'|'NAIVE':
+                case 'ARIMA'|'NAIVE':
                     
                     # Handle zero values in test_data for MAPE and MSPE calculations
                     test_zero_indices = np.where(test == 0)
@@ -39,6 +39,21 @@ class PerfMeasure:
                     temp_rmse = np.zeros(len(predictions)) 
                     for i in range(len(predictions)):
                         temp_rmse[i] = np.sqrt((predictions[i] - test.iloc[i]) ** 2)
+
+                    mean_rmse = np.mean(temp_rmse)
+
+                case 'SARIMA'|'SARIMAX':
+                    
+                    # Handle zero values in test_data for MAPE and MSPE calculations
+                    test_zero_indices = np.where(test == 0)
+                    #test.iloc[test_zero_indices] = 0.00000001
+
+                    pred_zero_indices = np.where(predictions == 0)
+                    predictions.iloc[pred_zero_indices] = 0.00000001
+                    
+                    temp_rmse = np.zeros(len(predictions)) 
+                    for i in range(len(predictions)):
+                        temp_rmse[i] = np.sqrt((predictions.iloc[i] - test.iloc[i]) ** 2)
 
                     mean_rmse = np.mean(temp_rmse)
                     
