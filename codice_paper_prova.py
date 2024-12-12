@@ -49,7 +49,7 @@ fset.titleFontSize = 14
 fset.boxTextSize = 14
 
 # Путь к корневой папке проекта
-dir_name = os.path.dirname(__file__)
+dir_name = os.path.dirname('.')
 
 # Горизонт прогноза в часах
 forecast_horizon = 0
@@ -154,7 +154,7 @@ def data_preprocessing(report_file_name: str, column_name: str, data_file_name: 
     ax.tick_params(axis='both', which='minor', labelsize=fset.tickMinorLabelSize)
 
     plt.setp(ax.get_xticklabels(), rotation=fset.tickXLabelRotation)
-    plt.savefig(fname=os.path.realpath(os.path.join(os.path.dirname(__file__), 'dati', 'Fig1.png')), dpi=fset.dpi,
+    plt.savefig(fname=os.path.realpath(os.path.join(os.path.dirname('.'), 'dati', 'Fig1.png')), dpi=fset.dpi,
                 bbox_inches='tight')
 
     plt.ylim(2, 9)
@@ -346,8 +346,7 @@ def performance_visualisation(x_date, y_true, y_pred, ypred_lower, ypred_upper, 
     ax.tick_params(axis='both', which='major', labelsize=fset.tickMajorLabelSize)
     ax.tick_params(axis='both', which='minor', labelsize=fset.tickMinorLabelSize)
     plt.setp(ax.get_xticklabels(), rotation=fset.tickXLabelRotation)
-    plt.savefig(fname=os.path.realpath(os.path.join(os.path.dirname(__file__), 'img', fig_file_name)),
-                dpi=fset.dpi, bbox_inches='tight')
+    plt.savefig(fname=os.path.join('.', fig_file_name), dpi=fset.dpi, bbox_inches='tight')
 
     manager = plt.get_current_fig_manager()
     manager.full_screen_toggle()
