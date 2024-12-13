@@ -72,6 +72,9 @@ class XGB_Predictor(Predictor):
             df['week_day_cos'] = np.cos(2 * np.pi * df.index.weekday / 7)
             df['hour_day_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
             df['hour_day_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
+            df['minute_sin'] = np.sin(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
+            df['minute_cos'] = np.cos(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
+
 
             # Aggiunta delle caratteristiche per il giorno del mese
             df['day_sin'] = np.sin(2 * np.pi * df.index.day / df.index.days_in_month)
@@ -81,18 +84,24 @@ class XGB_Predictor(Predictor):
             df['roll_mean_1_day'] = df[self.target_column].rolling(window=self.period, min_periods=1).mean()
             df['roll_mean_7_day'] = df[self.target_column].rolling(window=self.period*7, min_periods=1).mean()
 
+            # One-hot encoding for weekdays
+            df['is_weekday'] = np.where(df.index.weekday < 5, 1, 0)  # 1 for Monday-Friday, 0 for Saturday-Sunday
+
         # Aggiornamento dell'elenco delle caratteristiche esogene
         exog_features = [
-            #'month_sin', 
-            #'month_cos',
+            'month_sin', 
+            'month_cos',
             #'week_of_year_sin',
             #'week_of_year_cos',
             'week_day_sin',
             'week_day_cos',
             'hour_day_sin',
             'hour_day_cos',
-            'day_sin',  # Aggiunta del seno del giorno
-            'day_cos',  # Aggiunta del coseno del giorno
+            'minute_sin',
+            'minute_cos',
+            'is_weekday',
+            #'day_sin',  # Aggiunta del seno del giorno
+            #'day_cos',  # Aggiunta del coseno del giorno
             #'roll_mean_1_day',
            #'roll_mean_7_day',
         ]
@@ -100,15 +109,15 @@ class XGB_Predictor(Predictor):
         self.selected_exog = exog_features
                                 
         reg = XGBRegressor(
-            n_estimators=1000,  # Number of boosting rounds (you can tune this)
-            learning_rate=0.01,   # Learning rate (you can tune this)
-            max_depth=5,          # Maximum depth of the trees (you can tune this)
+            n_estimators=2000,  # Number of boosting rounds (you can tune this)
+            learning_rate=0.05,   # Learning rate (you can tune this)
+            max_depth=7,          # Maximum depth of the trees (you can tune this)
             min_child_weight=1,   # Minimum sum of instance weight needed in a child
             gamma=0,              # Minimum loss reduction required to make a further partition
-            subsample=0.6,        # Fraction of samples used for training
-            colsample_bytree=0.6, # Fraction of features used for training
+            subsample=0.8,        # Fraction of samples used for training
+            colsample_bytree=0.8, # Fraction of features used for training
             reg_alpha=1,          # L1 regularization term on weights
-            reg_lambda=2,         # L2 regularization term on weights
+            reg_lambda=1,         # L2 regularization term on weights
             objective='reg:squarederror',  # Objective function for regression
             random_state=42,      # Seed for reproducibility
             eval_metric=['rmse', 'mae'],
@@ -151,6 +160,8 @@ class XGB_Predictor(Predictor):
         #save model as an attribute for later use from external methods
         self.model = forecaster
 
+        pd.set_option('display.max_rows', None)
+
         print(forecaster.get_feature_importances())
 
         return forecaster
@@ -163,7 +174,7 @@ class XGB_Predictor(Predictor):
         cv = TimeSeriesFold(
         steps              = self.output_len,
         initial_train_size = None,
-        refit              = False,
+        refit              = 96,
                             )
         
         mse, predictions = backtesting_forecaster(
