@@ -90,7 +90,47 @@ class LSTM_Predictor(Predictor):
         """
         try:
 
-            num_features = 1
+            for df in (self.train, self.test):
+                # Existing time features
+                df['month_sin'] = np.sin(2 * np.pi * df.index.month / 12)
+                df['month_cos'] = np.cos(2 * np.pi * df.index.month / 12)
+                df['week_of_year_sin'] = np.sin(2 * np.pi * df.index.isocalendar().week / 52)
+                df['week_of_year_cos'] = np.cos(2 * np.pi * df.index.isocalendar().week / 52)
+                df['week_day_sin'] = np.sin(2 * np.pi * df.index.weekday / 7)
+                df['week_day_cos'] = np.cos(2 * np.pi * df.index.weekday / 7)
+                df['hour_day_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
+                df['hour_day_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
+                df['minute_sin'] = np.sin(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
+                df['minute_cos'] = np.cos(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
+
+
+                # Aggiunta delle caratteristiche per il giorno del mese
+                df['day_sin'] = np.sin(2 * np.pi * df.index.day / df.index.days_in_month)
+                df['day_cos'] = np.cos(2 * np.pi * df.index.day / df.index.days_in_month)
+
+                # One-hot encoding for weekdays
+                df['is_weekday'] = np.where(df.index.weekday < 5, 1, 0)  # 1 for Monday-Friday, 0 for Saturday-Sunday
+
+            # Aggiornamento dell'elenco delle caratteristiche esogene
+            self.exog_features = [
+                'month_sin', 
+                'month_cos',
+                #'week_of_year_sin',
+                #'week_of_year_cos',
+                'week_day_sin',
+                'week_day_cos',
+                'hour_day_sin',
+                'hour_day_cos',
+                'minute_sin',
+                'minute_cos',
+                'is_weekday',
+                #'day_sin',  # Aggiunta del seno del giorno
+                #'day_cos',  # Aggiunta del coseno del giorno
+                #'roll_mean_1_day',
+            #'roll_mean_7_day',
+            ]
+
+            self.num_features = 1 + len(self.exog_features)
             
             # CREATE MODEL  
 
@@ -98,7 +138,7 @@ class LSTM_Predictor(Predictor):
                 
                 optimizer = Adam(learning_rate=learning_rate)
                 loss = 'mean_squared_error'
-                input_shape = (input_len, num_features)  
+                input_shape = (input_len, self.num_features)  
                 
                 model = Sequential()
                 model.add(LSTM(units, activation='tanh', return_sequences=False, input_shape=input_shape))
@@ -115,8 +155,11 @@ class LSTM_Predictor(Predictor):
 
             model.summary()
 
-            X_train, y_train = self.data_windowing(self.train[self.target_column])
-      
+            if self.num_features == 1:
+                X_train, y_train = self.data_windowing(self.train[self.target_column])
+            else: 
+                X_train, y_train = self.multi_data_windowing(self.train)
+
             lr_scheduler = ReduceLROnPlateau(monitor='loss', factor=0.5, patience=10, min_lr=0.00001, verbose=1)
 
 
@@ -159,7 +202,12 @@ class LSTM_Predictor(Predictor):
         
     def test_model(self,model):
         try:
-            X_test, y_test = self.data_windowing(self.test[self.target_column])
+
+            if self.num_features == 1:
+                X_test, y_test = self.data_windowing(self.test[self.target_column])
+            else: 
+                X_test, y_test = self.multi_data_windowing(self.test)
+
             predictions = model.predict(X_test)
             predictions = predictions.flatten()
             
@@ -192,6 +240,33 @@ class LSTM_Predictor(Predictor):
         X = np.reshape(X, (X.shape[0], self.input_len, 1))
 
         return X, y
+    
+
+    def multi_data_windowing(self, df):
+        stride = 1 if self.output_len == 1 else self.output_len
+        X, y = [], []
+        indices = []
+
+        if len(df) < self.input_len + self.output_len:
+            print("Data is too short for creating windows")
+            return None
+        else:
+            # Identificazione delle colonne per X e y
+            feature_columns = self.exog_features + [self.target_column]
+            
+            for i in range(0, len(df) - self.input_len - self.output_len + 1, stride):
+                # Selezione delle righe e colonne per X
+                X.append(df.iloc[i:i + self.input_len][feature_columns].values)
+                # Selezione della colonna target per y
+                y.append(df.iloc[i + self.input_len:i + self.input_len + self.output_len][self.target_column].values)
+                indices.append(i)
+
+            # Conversione in array
+            X, y = np.array(X), np.array(y)
+            # Reshape dei dati di input per includere il numero di feature
+            X = X.reshape((X.shape[0], self.input_len, len(feature_columns)))
+
+            return X, y
         
     def repeated_holdout_validation(self, base_model, nreps=10):
       
