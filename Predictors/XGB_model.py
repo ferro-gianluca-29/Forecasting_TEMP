@@ -17,6 +17,8 @@ from skforecast.model_selection import bayesian_search_forecaster
 from skforecast.model_selection import backtesting_forecaster
 from skforecast.utils import save_forecaster
 
+from skforecast.preprocessing import RollingFeatures
+
 import shap
 import sklearn
 from sklearn.metrics import root_mean_squared_error
@@ -29,6 +31,9 @@ from Predictors.Predictor import Predictor
 import random
 import copy
 import sys
+
+from sklearn.preprocessing import PolynomialFeatures
+
 
 class XGB_Predictor(Predictor):
     """
@@ -86,19 +91,20 @@ class XGB_Predictor(Predictor):
 
             # One-hot encoding for weekdays
             df['is_weekday'] = np.where(df.index.weekday < 5, 1, 0)  # 1 for Monday-Friday, 0 for Saturday-Sunday
-
+                                                                                                                   
         # Aggiornamento dell'elenco delle caratteristiche esogene
+
         exog_features = [
-            'month_sin', 
-            'month_cos',
+            #'month_sin', 
+            #'month_cos',
             #'week_of_year_sin',
             #'week_of_year_cos',
             'week_day_sin',
             'week_day_cos',
             'hour_day_sin',
             'hour_day_cos',
-            'minute_sin',
-            'minute_cos',
+            #'minute_sin',
+            #'minute_cos',
             'is_weekday',
             #'day_sin',  # Aggiunta del seno del giorno
             #'day_cos',  # Aggiunta del coseno del giorno
@@ -147,14 +153,17 @@ class XGB_Predictor(Predictor):
             weights = np.where(index.isin(working_hours), 1, 0.4)
 
             return weights
+        
+        window_features = RollingFeatures(stats=["mean"], window_sizes=96 * 7)
 
         forecaster = ForecasterRecursive(
                 regressor       = reg,
+                window_features = window_features,
                 lags            = 96
              )
 
         forecaster.fit(y = self.train[self.target_column],
-                       exog = self.train[exog_features] 
+                       exog = self.train[self.selected_exog] 
                        )
         
         #save model as an attribute for later use from external methods
@@ -190,7 +199,7 @@ class XGB_Predictor(Predictor):
             cv                 = cv,
             metric             = 'mean_squared_error',
             n_jobs             = 'auto',
-            verbose            = True, # Change to False to see less information
+            verbose            = False, # Change to False to see less information
             show_progress      = True
             )
 

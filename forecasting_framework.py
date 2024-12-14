@@ -30,6 +30,7 @@ from skforecast.model_selection import backtesting_forecaster
 from skforecast.utils import load_forecaster
 
 from sklearn.ensemble  import StackingRegressor
+import matplotlib.pyplot as plt
 
 import os
 import sys
@@ -133,9 +134,14 @@ def main():
         ############### Optional time series analysis ############
         
         if args.ts_analysis:
-            time_s_analysis(df, args.target_column, args.period, d = 1, D = 0)
-            train, test, exit = data_preprocessor.preprocess_data()
             
+            train, test, exit = data_preprocessor.preprocess_data()
+            #train = data_preprocessor.replace_outliers(train)
+            #time_s_analysis(train, args.target_column, args.period, d = 1, D = 0)
+
+            
+
+
             multiple_STL(train, args.target_column)
             return 0
             
@@ -301,6 +307,29 @@ def main():
                 case 'XGB':
 
                     train, test, exit = data_preprocessor.preprocess_data()
+
+                    def zscore(s, window, thresh=3, return_all=False):
+                        roll = s.rolling(window=window, min_periods=1, center=True)
+                        avg = roll.mean()
+                        std = roll.std(ddof=0)
+                        z = s.sub(avg).div(std)   
+                        m = z.between(-thresh, thresh)
+                        
+                        if return_all:
+                            return z, avg, std, m
+                        return s.where(m, avg)
+                
+                    z, avg, std, m = zscore(train[args.target_column], window=96, return_all=True)
+
+                    ax = plt.subplot()
+
+                    train[args.target_column].plot(label='data')
+                    avg.plot(label='mean')
+                    train.loc[~m, args.target_column].plot(label='outliers', marker='o', ls='')
+                    avg[~m].plot(label='replacement', marker='o', ls='')
+                    plt.legend()
+
+                    train[args.target_column] = zscore(train[args.target_column], window=96)
                     
                     #Remove date duplicates in order to avoid error from asfreq call
                     train = train[~train.index.duplicated(keep='first')]
@@ -310,6 +339,7 @@ def main():
                     test = test[~test.index.duplicated(keep='first')]
                     test = test.asfreq(args.data_freq)
                     test = test.interpolate()
+            
                     
                     if exit:
                         raise ValueError("Unable to preprocess dataset.")

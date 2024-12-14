@@ -270,7 +270,7 @@ class DataPreprocessor():
         :return: DataFrame with outliers replaced
         """
         # Set the window size and k factor
-        window_size = 7  # Increase if execution is slow
+        window_size = 96  # Increase if execution is slow
         k = 1.5  # standard factor for IQR
         # Select only numeric columns
         numeric_cols = df.select_dtypes(include=[np.number]).columns
@@ -294,7 +294,7 @@ class DataPreprocessor():
             df[column] = df[column].mask(df[column] < lower_bound, lower_bound)
             # Replace values above the upper limit with the upper limit itself
             df[column] = df[column].mask(df[column] > upper_bound, upper_bound)
-        self.conditional_print("Number of outliers:", total_outliers)
+        print("Number of outliers:", total_outliers)
      
         return df
 

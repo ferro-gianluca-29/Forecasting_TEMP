@@ -95,15 +95,15 @@ def multiple_STL(dataframe,target_column):
     :param target_column: The column in the DataFrame to be decomposed.
     """
     
-    mstl = MSTL(dataframe[target_column], periods=[24, 24 * 7, 24 * 7 * 4])
+    mstl = MSTL(dataframe[target_column], periods=[96, 96 * 7, 96 * 7 * 4])
     res = mstl.fit()
 
     fig, ax = plt.subplots(nrows=2, figsize=[10,10])
-    res.seasonal["seasonal_24"].iloc[:24*3].plot(ax=ax[0])
+    res.seasonal["seasonal_96"].iloc[:96*3].plot(ax=ax[0])
     ax[0].set_ylabel(target_column)
     ax[0].set_title("Daily seasonality")
 
-    res.seasonal["seasonal_168"].iloc[:24*7*3].plot(ax=ax[1])
+    res.seasonal["seasonal_672"].iloc[:96*7*3].plot(ax=ax[1])
     ax[1].set_ylabel(target_column)
     ax[1].set_title("Weekly seasonality")
 
@@ -111,11 +111,11 @@ def multiple_STL(dataframe,target_column):
     plt.show()
 
     fig, ax = plt.subplots(nrows=2, figsize=[10,10])
-    res.seasonal["seasonal_168"].iloc[:24*7*3].plot(ax=ax[0])
-    ax[0].set_ylabel(target_column)
-    ax[0].set_title("Weekly seasonality")
+    res.seasonal["seasonal_672"].iloc[:96*7*3].plot(ax=ax[1])
+    ax[1].set_ylabel(target_column)
+    ax[1].set_title("Weekly seasonality")
 
-    res.seasonal["seasonal_672"].iloc[:24*7*4*3].plot(ax=ax[1])
+    res.seasonal["seasonal_2688"].iloc[:96*7*4*3].plot(ax=ax[1])
     ax[1].set_ylabel(target_column)
     ax[1].set_title("Monthly seasonality")
 
@@ -192,6 +192,73 @@ def time_s_analysis(df, target_column, seasonal_period, d = 0, D = 0):
     plt.legend(loc='best')
     plt.tight_layout()
     plt.show()
+
+    # Plot the time series 1 settimana
+    df = df.applymap(lambda x: x.replace(',', '.') if isinstance(x, str) else x)
+    df[target_column] = df[target_column].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+    plt.plot(df['date'].iloc[:96*7], df[target_column].iloc[:96*7], 'b')
+    plt.title('Time Series 1 settimana')
+    plt.xlabel('Time series index')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
+
+    # Plot the time series 1 giorno
+    df = df.applymap(lambda x: x.replace(',', '.') if isinstance(x, str) else x)
+    df[target_column] = df[target_column].apply(lambda x: float(x.replace(',', '.')) if isinstance(x, str) else x)
+    plt.plot(df['date'].iloc[:96], df[target_column].iloc[:96], 'b')
+    plt.title('Time Series 1 giorno')
+    plt.xlabel('Time series index')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
+
+
+    fig, axs = plt.subplots(2, 2, figsize=(8, 5), sharex=False, sharey=True)
+    axs = axs.ravel()
+
+    # Distribution by month
+    df['month'] = df.index.month
+    df.boxplot(column=target_column, by='month', ax=axs[0], flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('month')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[0])
+    axs[0].set_ylabel(target_column)
+    axs[0].set_title(f'{target_column} distribution by month', fontsize=9)
+
+    # Distribution by week day
+    df['week_day'] = df.index.day_of_week + 1
+    df.boxplot(column=target_column, by='week_day', ax=axs[1], flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('week_day')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[1])
+    axs[1].set_ylabel(target_column)
+    axs[1].set_title(f'{target_column} distribution by week day', fontsize=9)
+
+    # Distribution by hour of the day
+    df['hour_of_day'] = df.index.hour
+    df.boxplot(column=target_column, by='hour_of_day', ax=axs[2], flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('hour_of_day')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[2])
+    axs[2].set_ylabel(target_column)
+    axs[2].set_title(f'{target_column} distribution by hour of the day', fontsize=9)
+
+    # Distribution by week day and 15-minute interval of the day
+    df['interval_day'] = df.index.hour * 4 + df.index.minute // 15 + 1
+    mean_day_interval = df.groupby(["week_day", "interval_day"])[target_column].mean()
+    mean_day_interval.plot(ax=axs[3])
+    axs[3].set(
+        title       = f"Mean {target_column} during week",
+        xticks      = [i * 96 for i in range(7)],
+        xticklabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        xlabel      = "Day and 15-minute interval",
+        ylabel      = f"Number of {target_column}"
+    )
+    axs[3].title.set_size(10)
+
+    fig.suptitle("Seasonality plots", fontsize=12)
+    fig.tight_layout()
+
+
+
+
+
+
 
 
     adf_d = adf_test(df=df[target_column], verbose=True)
