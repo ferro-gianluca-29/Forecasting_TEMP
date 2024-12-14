@@ -136,11 +136,8 @@ def main():
         if args.ts_analysis:
             
             train, test, exit = data_preprocessor.preprocess_data()
-            #train = data_preprocessor.replace_outliers(train)
-            #time_s_analysis(train, args.target_column, args.period, d = 1, D = 0)
-
-            
-
+            train = data_preprocessor.replace_outliers(train)
+            time_s_analysis(train, args.target_column, args.period, d = 1, D = 0)
 
             multiple_STL(train, args.target_column)
             return 0
@@ -319,7 +316,7 @@ def main():
                             return z, avg, std, m
                         return s.where(m, avg)
                 
-                    z, avg, std, m = zscore(train[args.target_column], window=96, return_all=True)
+                    """ z, avg, std, m = zscore(train[args.target_column], window=96, return_all=True)
 
                     ax = plt.subplot()
 
@@ -329,7 +326,7 @@ def main():
                     avg[~m].plot(label='replacement', marker='o', ls='')
                     plt.legend()
 
-                    train[args.target_column] = zscore(train[args.target_column], window=96)
+                    train[args.target_column] = zscore(train[args.target_column], window=96)"""
                     
                     #Remove date duplicates in order to avoid error from asfreq call
                     train = train[~train.index.duplicated(keep='first')]

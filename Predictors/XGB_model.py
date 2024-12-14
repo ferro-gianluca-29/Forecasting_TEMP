@@ -106,8 +106,8 @@ class XGB_Predictor(Predictor):
             #'minute_sin',
             #'minute_cos',
             'is_weekday',
-            #'day_sin',  # Aggiunta del seno del giorno
-            #'day_cos',  # Aggiunta del coseno del giorno
+            'day_sin',  # Aggiunta del seno del giorno
+            'day_cos',  # Aggiunta del coseno del giorno
             #'roll_mean_1_day',
            #'roll_mean_7_day',
         ]
