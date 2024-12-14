@@ -173,22 +173,27 @@ class XGB_Predictor(Predictor):
 
         cv = TimeSeriesFold(
         steps              = self.output_len,
-        initial_train_size = None,
-        refit              = 96,
+        #initial_train_size = len(self.train[self.target_column]),  # con refit  
+        initial_train_size = None,  # senza refit  
+        refit              = False,
                             )
         
         mse, predictions = backtesting_forecaster(
-                        forecaster         = forecaster,
-                        y = pd.concat([forecaster.last_window_[self.target_column], self.test[self.target_column]]),
-                        exog               = pd.concat([self.train[self.selected_exog].iloc[-len(forecaster.last_window_):], 
-                                                                                        self.test[self.selected_exog]]),
-                        cv                 = cv,
-                        metric             = 'mean_squared_error',
-                        n_jobs             = 'auto',
-                        verbose            = False, # Change to False to see less information
-                        show_progress      = True
-                    )
-        
+            forecaster         = forecaster,
+            #y = pd.concat([self.train[self.target_column], self.test[self.target_column]]), # con refit
+            #exog  = pd.concat([self.train[self.selected_exog], self.test[self.selected_exog]]), # con refit
+                                                                            
+                                                                            
+            y = pd.concat([forecaster.last_window_[self.target_column], self.test[self.target_column]]),  # senza refit
+            exog = pd.concat([self.train[self.selected_exog].iloc[-len(forecaster.last_window_):],        # senza refit
+                                                                            self.test[self.selected_exog]]),
+            cv                 = cv,
+            metric             = 'mean_squared_error',
+            n_jobs             = 'auto',
+            verbose            = True, # Change to False to see less information
+            show_progress      = True
+            )
+
         #print(f"BACKTESTING RMSE: {np.sqrt(mse['mean_squared_error'])}")
 
         predictions.rename(columns={'pred': self.target_column}, inplace=True)

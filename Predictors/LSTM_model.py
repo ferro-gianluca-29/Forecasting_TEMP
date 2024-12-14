@@ -70,7 +70,7 @@ class LSTM_Predictor(Predictor):
         self.output_len = output_len
         self.validation = validation
         self.model = None
-        self.epochs = 1
+        self.epochs = 100
         self.batch_size = 32
         self.learning_rate = 0.0001
 
