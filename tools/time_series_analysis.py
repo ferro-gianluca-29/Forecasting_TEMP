@@ -213,51 +213,64 @@ def time_s_analysis(df, target_column, seasonal_period, d = 0, D = 0):
     plt.tight_layout()
     plt.show()
 
+    df['weekday'] = df.index.day_name()
+    df['minutes'] = df.index.hour * 60 + df.index.minute
+    df['hours'] = df.index.hour + df.index.minute / 60
 
-    fig, axs = plt.subplots(2, 2, figsize=(8, 5), sharex=False, sharey=True)
-    axs = axs.ravel()
+
+    # Creazione di un grafico per ciascun giorno della settimana
+
+    week_days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+    for day in week_days:
+        plt.figure(figsize=(14, 10))
+        daily_data = df[df['weekday'] == day]
+        for label, grp in daily_data.groupby(daily_data.index.date):
+            plt.plot(grp['hours'], grp[target_column], label=label, alpha=0.5)
+        plt.title(day)
+        plt.xlabel('Hours from midnight')
+        plt.ylabel('Value')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.show()
+
 
     # Distribution by month
     df['month'] = df.index.month
-    df.boxplot(column=target_column, by='month', ax=axs[0], flierprops={'markersize': 3, 'alpha': 0.3})
-    df.groupby('month')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[0])
-    axs[0].set_ylabel(target_column)
-    axs[0].set_title(f'{target_column} distribution by month', fontsize=9)
+    df.boxplot(column=target_column, by='month', flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('month')[target_column].median().plot(style='o-', linewidth=0.8)
+    plt.xlabel('Month')
+    plt.title(f'{target_column} Distribution by Month', fontsize=9)
+    plt.show()
+
 
     # Distribution by week day
     df['week_day'] = df.index.day_of_week + 1
-    df.boxplot(column=target_column, by='week_day', ax=axs[1], flierprops={'markersize': 3, 'alpha': 0.3})
-    df.groupby('week_day')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[1])
-    axs[1].set_ylabel(target_column)
-    axs[1].set_title(f'{target_column} distribution by week day', fontsize=9)
+    df.boxplot(column=target_column, by='week_day', flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('week_day')[target_column].median().plot(style='o-', linewidth=0.8)
+    plt.ylabel(target_column)
+    plt.title(f'{target_column} Distribution by Week Day', fontsize=9)
+    plt.show()
 
     # Distribution by hour of the day
     df['hour_of_day'] = df.index.hour
-    df.boxplot(column=target_column, by='hour_of_day', ax=axs[2], flierprops={'markersize': 3, 'alpha': 0.3})
-    df.groupby('hour_of_day')[target_column].median().plot(style='o-', linewidth=0.8, ax=axs[2])
-    axs[2].set_ylabel(target_column)
-    axs[2].set_title(f'{target_column} distribution by hour of the day', fontsize=9)
+    df.boxplot(column=target_column, by='hour_of_day', flierprops={'markersize': 3, 'alpha': 0.3})
+    df.groupby('hour_of_day')[target_column].median().plot(style='o-', linewidth=0.8)
+    plt.ylabel(target_column)
+    plt.title(f'{target_column} Distribution by Hour of the Day', fontsize=9)
+    plt.show()
 
     # Distribution by week day and 15-minute interval of the day
     df['interval_day'] = df.index.hour * 4 + df.index.minute // 15 + 1
     mean_day_interval = df.groupby(["week_day", "interval_day"])[target_column].mean()
-    mean_day_interval.plot(ax=axs[3])
-    axs[3].set(
-        title       = f"Mean {target_column} during week",
-        xticks      = [i * 96 for i in range(7)],
-        xticklabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        xlabel      = "Day and 15-minute interval",
-        ylabel      = f"Number of {target_column}"
-    )
-    axs[3].title.set_size(10)
 
-    fig.suptitle("Seasonality plots", fontsize=12)
-    fig.tight_layout()
-
-
-
-
-
+    mean_day_interval.plot()
+    plt.title(f"Mean {target_column} During Week", fontsize=10)
+    plt.xticks([i * 96 for i in range(7)], ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+    plt.xlabel("Day and 15-minute interval")
+    plt.ylabel(f"Number of {target_column}")
+    plt.tight_layout()
+    plt.show()
 
 
 

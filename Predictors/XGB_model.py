@@ -80,6 +80,22 @@ class XGB_Predictor(Predictor):
             df['minute_sin'] = np.sin(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
             df['minute_cos'] = np.cos(2 * np.pi * (df.index.hour * 60 + df.index.minute) / 1440)
 
+            df['peak_morning'] = ((df.index.time >= pd.to_datetime('11:00').time()) &
+                          (df.index.time <= pd.to_datetime('14:00').time())).astype(int)
+            df['peak_evening'] = ((df.index.time >= pd.to_datetime('19:00').time()) &
+                                  (df.index.time <= pd.to_datetime('21:00').time())).astype(int)
+ 
+            df['pre_peak_morning'] = ((df.index.time >= pd.to_datetime('09:00').time()) &
+                          (df.index.time < pd.to_datetime('11:00').time())).astype(int)
+            df['post_peak_morning'] = ((df.index.time > pd.to_datetime('14:00').time()) &
+                                      (df.index.time <= pd.to_datetime('16:00').time())).astype(int)
+            df['pre_peak_evening'] = ((df.index.time >= pd.to_datetime('17:00').time()) &
+                                      (df.index.time < pd.to_datetime('19:00').time())).astype(int)
+            df['post_peak_evening'] = ((df.index.time > pd.to_datetime('21:00').time()) &
+                                      (df.index.time <= pd.to_datetime('23:00').time())).astype(int)
+
+                                  
+
 
             # Aggiunta delle caratteristiche per il giorno del mese
             df['day_sin'] = np.sin(2 * np.pi * df.index.day / df.index.days_in_month)
@@ -106,10 +122,17 @@ class XGB_Predictor(Predictor):
             #'minute_sin',
             #'minute_cos',
             'is_weekday',
-            'day_sin',  # Aggiunta del seno del giorno
-            'day_cos',  # Aggiunta del coseno del giorno
-            #'roll_mean_1_day',
-           #'roll_mean_7_day',
+            'peak_morning',
+            'peak_evening',
+            'pre_peak_morning',
+            'post_peak_morning',
+            'pre_peak_evening',
+            'post_peak_evening',
+
+            #'day_sin',  # Aggiunta del seno del giorno
+            #'day_cos',  # Aggiunta del coseno del giorno
+            'roll_mean_1_day',
+            'roll_mean_7_day',
         ]
         
         self.selected_exog = exog_features
@@ -159,7 +182,6 @@ class XGB_Predictor(Predictor):
         forecaster = ForecasterRecursive(
                 regressor       = reg,
                 window_features = window_features,
-                differentiation = 1,
                 lags            = 96
              )
 
@@ -183,7 +205,6 @@ class XGB_Predictor(Predictor):
 
         cv = TimeSeriesFold(
         steps              = self.output_len,
-        differentiation = 1,
         #initial_train_size = len(self.train[self.target_column]),  # con refit  
         initial_train_size = None,  # senza refit  
         refit              = False,
