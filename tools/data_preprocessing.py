@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime as datetime
 import pickle
+import matplotlib.pyplot as plt
 
 class DataPreprocessor():
     """
@@ -94,6 +95,8 @@ class DataPreprocessor():
             ######### OUTLIER MANAGEMENT #########
             if self.run_mode != "test":
                 # Removing outliers from the training set
+                
+
                 train = self.replace_outliers(train)
 
             ######### END OUTLIER MANAGEMENT #########

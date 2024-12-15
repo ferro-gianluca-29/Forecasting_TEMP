@@ -159,6 +159,7 @@ class XGB_Predictor(Predictor):
         forecaster = ForecasterRecursive(
                 regressor       = reg,
                 window_features = window_features,
+                differentiation = 1,
                 lags            = 96
              )
 
@@ -182,6 +183,7 @@ class XGB_Predictor(Predictor):
 
         cv = TimeSeriesFold(
         steps              = self.output_len,
+        differentiation = 1,
         #initial_train_size = len(self.train[self.target_column]),  # con refit  
         initial_train_size = None,  # senza refit  
         refit              = False,
