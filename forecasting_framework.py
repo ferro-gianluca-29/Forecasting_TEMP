@@ -561,13 +561,23 @@ def main():
                         # Load scaler for unscaling data
                         with open(f"{folder_path}/scaler.pkl", "rb") as file:
                             scaler = pickle.load(file)
-                        predictions[args.target_column] = scaler.inverse_transform(predictions[[args.target_column]])
+
+                        temp_array = np.column_stack((predictions[args.target_column].values, np.zeros(len(predictions))))
+                        temp_transformed = scaler.inverse_transform(temp_array)
+                        predictions[args.target_column] = temp_transformed[:, 0]
+
+                        #predictions[args.target_column] = scaler.inverse_transform(predictions[[args.target_column]])
 
                         # Unscale test data
                         # Load scaler for unscaling test data
                         with open(f"{path}/scaler.pkl", "rb") as file:
                             scaler = pickle.load(file)
-                        test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
+
+                        temp_array = np.column_stack((test[args.target_column].values, np.zeros(len(test))))
+                        temp_transformed = scaler.inverse_transform(temp_array)
+                        test[args.target_column] = temp_transformed[:, 0]
+
+                        #test[args.target_column] = scaler.inverse_transform(test[[args.target_column]])
                         
 
                     predictions = predictions[args.target_column]

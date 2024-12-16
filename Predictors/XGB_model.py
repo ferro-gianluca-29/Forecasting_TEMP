@@ -115,19 +115,14 @@ class XGB_Predictor(Predictor):
             #'month_cos',
             #'week_of_year_sin',
             #'week_of_year_cos',
-            'week_day_sin',
-            'week_day_cos',
+
+            #'week_day_sin',
+            #'week_day_cos',
             'hour_day_sin',
             'hour_day_cos',
             #'minute_sin',
             #'minute_cos',
             'is_weekday',
-            'peak_morning',
-            'peak_evening',
-            'pre_peak_morning',
-            'post_peak_morning',
-            'pre_peak_evening',
-            'post_peak_evening',
 
             #'day_sin',  # Aggiunta del seno del giorno
             #'day_cos',  # Aggiunta del coseno del giorno
@@ -138,9 +133,9 @@ class XGB_Predictor(Predictor):
         self.selected_exog = exog_features
                                 
         reg = XGBRegressor(
-            n_estimators=2000,  # Number of boosting rounds (you can tune this)
+            n_estimators=800,  # Number of boosting rounds (you can tune this)
             learning_rate=0.05,   # Learning rate (you can tune this)
-            max_depth=7,          # Maximum depth of the trees (you can tune this)
+            max_depth=5,          # Maximum depth of the trees (you can tune this)
             min_child_weight=1,   # Minimum sum of instance weight needed in a child
             gamma=0,              # Minimum loss reduction required to make a further partition
             subsample=0.8,        # Fraction of samples used for training

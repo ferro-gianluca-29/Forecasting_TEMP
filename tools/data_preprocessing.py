@@ -258,47 +258,31 @@ class DataPreprocessor():
         csv2.to_csv(second_file_name, index=False)
     
     def replace_outliers(self,df):
-        """
-        Replaces outliers in the dataset based on the Interquartile Range (IQR)
-        method. Instead of analyzing the entire dataset at once, this method focuses on a window of data points at a time. 
-        The window moves through the data series step by step. For each step, it includes the next data point
-        in the sequence while dropping the oldest one, thus maintaining a constant
-        window size. For each position of the window, the function calculates the
-        first (Q1) and third (Q3) quartiles of the data within the window. These
-        quartiles are used to determine the Interquartile Range (IQR), from which
-        lower and upper bounds for outliers are derived.
-
-
-        :param df: DataFrame from which to remove and replace outliers
-        :return: DataFrame with outliers replaced
-        """
-        # Set the window size and k factor
         window_size = 96  # Increase if execution is slow
         k = 1.5  # standard factor for IQR
         # Select only numeric columns
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         total_outliers = 0
+        
         # Calculate IQR only for numeric columns
         for column in numeric_cols:
-            # Calculate IQR only for numeric columns
-            Q1 = df[column].rolling(window= window_size).quantile(0.25)
-            Q3 = df[column].rolling(window= window_size).quantile(0.75)
+            Q1 = df[column].rolling(window=window_size).quantile(0.25)
+            Q3 = df[column].rolling(window=window_size).quantile(0.75)
             IQR = Q3 - Q1
             lower_bound = Q1 - (k * IQR)
             upper_bound = Q3 + (k * IQR)
-            
+
             # Count outliers
             outliers_lower = (df[column] < lower_bound).sum()
             outliers_upper = (df[column] > upper_bound).sum()
-            # Add up outliers for each column
             total_outliers += outliers_lower + outliers_upper
 
             # Replace values below the lower limit with the lower limit itself
-            df[column] = df[column].mask(df[column] < lower_bound, lower_bound)
+            df.loc[df[column] < lower_bound, column] = lower_bound
             # Replace values above the upper limit with the upper limit itself
-            df[column] = df[column].mask(df[column] > upper_bound, upper_bound)
+            df.loc[df[column] > upper_bound, column] = upper_bound
+
         print("Number of outliers:", total_outliers)
-     
         return df
 
     def print_stats(self, train):
